@@ -18,7 +18,7 @@
 
   <p id="msg" class="hidden">¡Gracias por inscribirte!</p>
 
-  <form id="inscripcion-form" name="inscripcion" method="POST" netlify netlify-honeypot="bot-field">
+  <form id="inscripcion-form" name="inscripcion" method="POST" netlify netlify-honeypot="bot-field" action="/.netlify/functions/submit-to-sheets">
     <p class="hidden">
       <label>Don’t fill this out: <input name="bot-field" /></label>
     </p>
