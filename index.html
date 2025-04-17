@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Formulario de Inscripción</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    form { max-width: 400px; margin: auto; }
+    label { display: block; margin-top: 1em; }
+    input { width: 100%; padding: 0.5em; }
+    .mensaje { color: green; font-weight: bold; margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Formulario de Inscripción</h1>
+  <form name="inscripcion" netlify netlify-honeypot="bot-field" id="formulario">
+    <input type="hidden" name="form-name" value="inscripcion" />
+    <p hidden>
+      <label>Bot: <input name="bot-field" /></label>
+    </p>
+    <label>Nombre: <input type="text" name="nombre" required /></label>
+    <label>Empresa: <input type="text" name="empresa" required /></label>
+    <label>Email: <input type="email" name="email" required /></label>
+    <label>Teléfono: <input type="tel" name="telefono" required /></label>
+    <label>Cargo: <input type="text" name="cargo" required /></label>
+    <button type="submit">Enviar</button>
+    <p class="mensaje" id="mensaje"></p>
+  </form>
+  <script>
+    const formulario = document.getElementById('formulario');
+    const mensaje = document.getElementById('mensaje');
+
+    formulario.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const datos = new FormData(formulario);
+      const objeto = {};
+      datos.forEach((valor, clave) => objeto[clave] = valor);
+
+      try {
+        const respuesta = await fetch('/.netlify/functions/submit-to-sheets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(objeto)
+        });
+
+        if (respuesta.ok) {
+          mensaje.textContent = '¡Gracias por inscribirte!';
+          formulario.reset();
+        } else {
+          mensaje.textContent = 'Error al enviar la inscripción.';
+        }
+      } catch (error) {
+        mensaje.textContent = 'Error de conexión.';
+      }
+    });
+  </script>
+</body>
+</html>
