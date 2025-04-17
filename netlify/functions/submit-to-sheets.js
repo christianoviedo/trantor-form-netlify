@@ -1,69 +1,31 @@
-    import { google } from "googleapis";
+import { google } from 'googleapis';
 
-    const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
+export default async (req) => {
+  if (req.method !== 'POST') {
+    return new Response('Método no permitido', { status: 405 });
+  }
+
+  try {
+    const data = await req.json();
+
     const auth = new google.auth.GoogleAuth({
       credentials: JSON.parse(process.env.GCP_SERVICE_ACCOUNT_JSON),
-      scopes: SCOPES,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets']
     });
-    const sheets = google.sheets({ version: "v4", auth });
 
-    export default async (req, context) => {
-      if (req.httpMethod !== "POST") {
-        return { statusCode: 405, body: "Método no permitido" };
-      }
+    const sheets = google.sheets({ version: 'v4', auth });
+    const values = [[data.nombre, data.empresa, data.email, data.telefono, data.cargo]];
 
-      try {
-        const data = JSON.parse(req.body).payload.data;
-        const fila = [
-          data.nombre,
-          data.empresa,
-          data.email,
-          data.telefono,
-          data.cargo,
-          new Date().toISOString(),
-        ];
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: process.env.SHEET_ID,
+      range: 'A1',
+      valueInputOption: 'RAW',
+      requestBody: { values }
+    });
 
-        // Guarda en Google Sheets
-        await sheets.spreadsheets.values.append({
-          spreadsheetId: process.env.SHEET_ID,
-          range: "A:F",
-          valueInputOption: "USER_ENTERED",
-          requestBody: { values: [fila] },
-        });
-
-        // Envía correo via Mailgun HTTP API
-        const texto = `
-Nuevo inscrito en el formulario:
-
-Nombre:   ${data.nombre}
-Empresa:  ${data.empresa}
-Email:    ${data.email}
-Teléfono: ${data.telefono}
-Cargo:    ${data.cargo}
-Fecha:    ${new Date().toLocaleString("es-CL", { timeZone: "America/Santiago" })}
-        `;
-
-        const domain = process.env.MAILGUN_DOMAIN;
-        const apiKey = process.env.MAILGUN_API_KEY;
-        const authHeader = "Basic " + Buffer.from(`api:${apiKey}`).toString("base64");
-
-        await fetch(`https://api.mailgun.net/v3/${domain}/messages`, {
-          method: "POST",
-          headers: {
-            Authorization: authHeader,
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: new URLSearchParams({
-            from: process.env.FROM_EMAIL || `no-reply@${domain}`,
-            to: "asimov@trantorfintech.com",
-            subject: "Nuevo inscrito en el formulario",
-            text: texto
-          })
-        });
-
-        return { statusCode: 200, body: "OK" };
-      } catch (err) {
-        console.error(err);
-        return { statusCode: 500, body: "Error interno" };
-      }
-    };
+    return new Response('Inscripción guardada correctamente.', { status: 200 });
+  } catch (error) {
+    console.error('Error al guardar en Google Sheets:', error);
+    return new Response('Error interno del servidor.', { status: 500 });
+  }
+};
