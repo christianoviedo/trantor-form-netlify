@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Formulario de inscripción</title>
+  <style>
+    body{font-family:sans-serif;max-width:600px;margin:auto;padding:2rem;}
+    label{display:block;margin-top:1rem;font-weight:600;}
+    input{width:100%;padding:.6rem;margin-top:.25rem;border:1px solid #ccc;border-radius:4px;}
+    button{margin-top:1.5rem;padding:.7rem 2rem;border:0;background:#1b73e8;color:#fff;border-radius:4px;font-size:1rem;cursor:pointer;}
+    .hidden{display:none;}
+    #msg{margin-top:1rem;font-size:1.25rem;font-weight:700;background:#e8f5e9;color:#2e7d32;padding:.8rem;border:1px solid #2e7d32;border-radius:4px;text-align:center;}
+  </style>
+</head>
+<body>
+  <h1>Inscríbete</h1>
+
+  <p id="msg" class="hidden">¡Gracias por inscribirte!</p>
+
+  <form id="inscripcion-form" name="inscripcion" method="POST" netlify netlify-honeypot="bot-field">
+    <p class="hidden">
+      <label>Don’t fill this out: <input name="bot-field" /></label>
+    </p>
+
+    <input type="hidden" name="form-name" value="inscripcion" />
+
+    <label>Nombre
+      <input type="text" name="nombre" required />
+    </label>
+
+    <label>Empresa
+      <input type="text" name="empresa" required />
+    </label>
+
+    <label>E‑mail
+      <input type="email" name="email" required />
+    </label>
+
+    <label>Teléfono
+      <input type="tel" name="telefono" required />
+    </label>
+
+    <label>Cargo
+      <input type="text" name="cargo" required />
+    </label>
+
+    <button type="submit">Enviar</button>
+  </form>
+
+  <script>
+  const form = document.getElementById('inscripcion-form');
+  const msg  = document.getElementById('msg');
+
+  const encode = (data) =>
+    Object.keys(data)
+      .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+      .join('&');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const json = Object.fromEntries(formData.entries());
+
+    try {
+      await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: encode(json)
+      });
+
+      form.reset();
+      msg.classList.remove('hidden');
+
+      // Ocultar mensaje después de 5 s
+      setTimeout(() => msg.classList.add('hidden'), 5000);
+    } catch (err) {
+      alert('Hubo un error. Intenta nuevamente.');
+      console.error(err);
+    }
+  });
+  </script>
+</body>
+</html>
